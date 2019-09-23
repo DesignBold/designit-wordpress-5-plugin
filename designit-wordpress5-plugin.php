@@ -72,6 +72,64 @@ function deactivate_designbold() {
 register_activation_hook(__FILE__, 'activate_designbold');
 register_deactivation_hook(__FILE__, 'deactivate_designbold');
 
+/*// Add item to admin menu
+add_action('admin_menu', 'dbwp5_add_admin_menu');
+function dbwp5_add_admin_menu() {
+	//create new top-level menu
+	$icon = DB_URL . '/assets/images/16.png';
+	add_menu_page('DesignBold option', 'DesignBold menu', 'manage_options', 'designbold-menu', 'dbwp5_plugin_setting_page', $icon);
+}
+
+// Generate html page option
+function dbwp5_plugin_setting_page() {
+	?>
+	<div class="wrap">
+		<h1>DesignBold Option</h1>
+		<p>App key and app secret must be required to plugin work. If one of 2 fields be empty then plugin will not work.</p>
+		<?php settings_errors();?>
+		<!-- Phải chạy vào options.php đây là mặc định của wordpress :( -->
+		<form method="post" action="<?php echo admin_url('admin-ajax.php?action=dbwp5-save-option'); ?>">
+			<table class="form-table">
+				<tr class="form-field form-required">
+					<th scope="row">App key <span class="description">(required)</span></th>
+					<td><input type="text" name="dbwp5_option_app_key" value="<?php echo esc_attr(get_option('dbwp5_option_app_key')); ?>" placeholder="app key" /></td>
+				</tr>
+				<tr class="form-field form-required">
+					<th scope="row">App secret <span class="description">(required)</span></th>
+					<td><input type="text" name="dbwp5_option_app_secret" value="<?php echo esc_attr(get_option('dbwp5_option_app_secret')); ?>" placeholder="app secret" /></td>
+				</tr>
+			</table>
+
+			<p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes"  /></p>
+
+		</form>
+	</div>
+<?php }
+
+// Call update option function
+add_action('wp_ajax_nopriv_dbwp5-save-option', 'dbwp5_save_option');
+add_action('wp_ajax_dbwp5-save-option', 'dbwp5_save_option');
+function dbwp5_save_option() {
+	if (isset($_POST['submit'])) {
+		$app_key =
+		isset($_POST['dbwp5_option_app_key']) ? sanitize_text_field($_POST['dbwp5_option_app_key']) : "";
+
+		$app_secret =
+		isset($_POST['dbwp5_option_app_secret']) ? sanitize_text_field($_POST['dbwp5_option_app_secret']) : "";
+
+		add_action('alter_item', 'dbwp5_update_option', 10, 2);
+		function dbwp5_update_option($app_key, $app_secret) {
+			update_option('dbwp5_option_app_key', $app_key, 'yes');
+			update_option('dbwp5_option_app_secret', $app_secret, 'yes');
+		}
+
+		do_action('alter_item', $app_key, $app_secret);
+		// redirect when complete
+		wp_safe_redirect('admin.php?page=designbold-menu');
+	}
+	exit(0);
+}*/
+
 add_action('admin_enqueue_scripts', 'dbwp5_namespace_scripts_styles');
 function dbwp5_namespace_scripts_styles() {
 	$post = get_post();
