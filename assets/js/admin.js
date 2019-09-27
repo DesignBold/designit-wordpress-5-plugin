@@ -578,6 +578,7 @@ DBWP5.print_layout_workspaceData = () => {
         html += "</div>";
         html += "</div>";
         html += "</div>";
+        html += '<button type="button" class="check" tabindex="0"><span class="media-modal-icon"></span><span class="screen-reader-text">Deselect</span></button>';
         html += "</div>";
     }
     html += '</div>';
@@ -594,6 +595,9 @@ DBWP5.append_layout_workspaceData = (data) => {
     var res_data = data;
     var html = '';
     for (var i in res_data) {
+        if(res_data[i].thumb == ''){
+            res_data[i].thumb = 'https://cdn.designbold.com/www/dbday/social/images/nothumb.jpg';
+        }
         html += "<div class='item' data-id='"+res_data[i]._id+"' onclick='DBWP5.design_info(this)'>";
         html += "<div class='attachment-preview'>";
         html += "<div class='thumbnail'>";
@@ -616,6 +620,8 @@ DBWP5.design_info_flag = false;
  * @return { html }      Create html and append to media-sidebar
  */
 DBWP5.design_info = async (data) => {
+    $('.designbold-items.attachments-browser .attachments .item').removeClass('selected');
+    data.classList.add('selected');
     if(DBWP5.design_info_flag !== false) {
         return;
     }
@@ -765,20 +771,50 @@ function DBWP5_db_api_check_render(url){
     })
 }
 
+DBWP5.db_api_check_render_with_pk = (url) => {
+    return new Promise((resolve, reject) => {
+        var data = null;
+        var _url = url;
+        var xhr = new XMLHttpRequest();
+        var accessToken = DBWP5_localize.access_token;
+        xhr.withCredentials = false;
+        xhr.addEventListener("readystatechange", function () {
+            if (this.readyState === 4) {
+                if(xhr.status == 200){
+                    var res = JSON.parse(this.response);
+                    resolve(res);
+                }else if(xhr.status == 406){
+                    resolve(xhr.status);
+                }else{
+                    reject('500');
+                }
+            }
+        });
+
+        xhr.open("GET", url);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
+        xhr.send(data);
+    })
+}
+
 /**
  * db_api_free_render Using API to download design
  * Return download url design
  */
-async function DBWP5_db_api_check_render_with_pk(url){
-    var _url = url;
-    var i = 0;
+async function DBWP5_db_api_check_render_with_pk(url, type=0){
     var downloadUrl = '';
     var document_id = '';
 
-    var result2 = await DBWP5_db_api_check_render(url);
+    if(type == 0){
+        var result2 = await DBWP5_db_api_check_render(url);
+    }else if(type == 1){
+        var result2 = DBWP5.db_api_check_render_with_pk(url, 1);
+    }
+    
     
     if(result2.response == undefined || result2 == 406){
-        DBWP5_db_api_check_render_with_pk(url);
+        DBWP5_db_api_check_render_with_pk(url, 0);
     }else if(result2 == 500){
         console.log('Render false!');
     }else{
@@ -887,7 +923,7 @@ DBWP5_db_api_free_render = (attr) => {
         var _id = res.response._id;
         var name = res.response._name;
         var url = "https://api.designbold.com/v3/document/"+id+"/render?name="+name+"&type=png&crop_bleed=0&quality=high&pages=picked&mode=download&wm=0&session=&beta=0&picked=%5B1%5D&pk="+_pk;
-        DBWP5_db_api_check_render_with_pk(url);
+        DBWP5_db_api_check_render_with_pk(url, 0);
     })
     .catch((rej) => {
         console.log('Render error!');
