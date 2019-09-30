@@ -161,6 +161,7 @@ function dbwp5_namespace_scripts_styles() {
 		'app_key' => get_option('dbwp5_option_app_key') != '' ? get_option('dbwp5_option_app_key') : "",
 		'siteurl' => get_option('siteurl'),
 		'ajax_get_option' => admin_url('admin-ajax.php?action=' . DB_AFFIX . 'ajax-get-option'),
+		'ajax_logout_url' => admin_url('admin-ajax.php?action=' . DB_AFFIX . 'process-logout'),
 	));
 }
 

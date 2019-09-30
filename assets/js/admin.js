@@ -328,14 +328,16 @@ DBWP5.logout = function() {
     var settings = {
         "async": true,
         "crossDomain": true,
-        "url": DBWP5_localize.logout_url,
+        "url": DBWP5_localize.ajax_logout_url,
         "method": "GET",
         "headers": {
             "cache-control": "no-cache"
         }
     }
     $.ajax(settings).done(function(response) {
-        location.reload();
+        DBWP5_localize.access_token = '';
+        DBWP5_localize.refresh_token = '';
+        DBWP5.process_login();
     });
 }
 
@@ -452,10 +454,10 @@ DBWP5.update_access_token_option = (value) => {
 }
 
 /* Get info user */
-DBWP5.db_api_get_info_user = function() {
+DBWP5.db_api_get_info_user = () => {
     var accessToken = DBWP5_localize.access_token;
     if(accessToken !== ''){
-        var res = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             var data = null;
             var xhr = new XMLHttpRequest();
             var url = "https://api.designbold.com/v3/user/me?";
@@ -465,7 +467,7 @@ DBWP5.db_api_get_info_user = function() {
                 if (this.readyState === 4) {
                     if(xhr.status == 200){
                         DBWP5.user_account = JSON.parse(this.response);
-                        // resolve(this.response);
+                        resolve(DBWP5.user_account);
                     }else{
                         reject(this.statusText);
                     }
@@ -494,14 +496,17 @@ DBWP5.__showIFrame = function() {
  * @return {true} [ show layout workspace ]
  * @return {false} [ show layout login ]
  */
-DBWP5.process_login = function(){
+DBWP5.process_login = function () {
     DBWP5.get_new_access_token()
     .then((res) => {
         var res_data = JSON.parse(res);
         DBWP5.update_access_token_option( res_data['access_token'] );
         DBWP5_localize.access_token = res_data['access_token'];
+        var res2 =DBWP5.db_api_get_info_user();
+        return res2;
+    })
+    .then(function (res2){
         DBWP5.layout_workspaceData();
-        DBWP5.db_api_get_info_user();
     })
     .catch((rej) => {
         // DBWP5.add_media_view();
@@ -513,30 +518,34 @@ DBWP5.process_login = function(){
  * Get new access token
  * @return {json} [Access token]
  */
-DBWP5.get_new_access_token = () => {
+DBWP5.get_new_access_token = function() {
     return new Promise ((resolve, reject) => {
         var app_key = DBWP5_localize.app_key;
         var app_redirect_url = DBWP5_localize.app_update_option;
         var refresh_token = DBWP5_localize.refresh_token;
 
-        var data = "app_key=" + app_key + "&redirect_uri=" + app_redirect_url + "&grant_type=refresh_token&refresh_token=" + refresh_token;
-        var xhr = new XMLHttpRequest();
-        xhr.withCredentials = true;
+        if(refresh_token !== ''){
+            var data = "app_key=" + app_key + "&redirect_uri=" + app_redirect_url + "&grant_type=refresh_token&refresh_token=" + refresh_token;
+            var xhr = new XMLHttpRequest();
+            xhr.withCredentials = true;
 
-        xhr.addEventListener("readystatechange", function () {
-            if (this.readyState === 4) {
-                if(xhr.status == 200){
-                    resolve(this.response);
-                }else{
-                    reject(this.response);
+            xhr.addEventListener("readystatechange", function () {
+                if (this.readyState === 4) {
+                    if(xhr.status == 200){
+                        resolve(this.response);
+                    }else{
+                        reject(this.response);
+                    }
                 }
-            }
-        });
+            });
 
-        xhr.open("POST", "https://accounts.designbold.com/v2/oauth/token");
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.open("POST", "https://accounts.designbold.com/v2/oauth/token");
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-        xhr.send(data);
+            xhr.send(data);
+        }else{
+            reject('Missing refresh_token');
+        }
     });
 }
 
@@ -565,10 +574,22 @@ DBWP5.layout_workspaceData = () => {
  * @return {html} Print layout workspace
  */
 DBWP5.print_layout_workspaceData = () => {
-    var res_data = DBWP5.all_data;
-    var section = document.createElement('div');
-    section.className = 'designbold-items attachments-browser';
+    var res_data        = DBWP5.all_data;
+    var section         = document.createElement('div');
+    section.className   = 'designbold-items attachments-browser';
+    var avatar          = DBWP5.user_account.response.account.avatar;
+    var email           = DBWP5.user_account.response.account.email;
+    var name           = DBWP5.user_account.response.account.name;
+
     var html = '<div class="attachments ui-sortable ui-sortable-disabled">';
+    html += "<div class='toolbar'>";
+    html += '<ul>';
+    html += '<li class="avatar"><img src="'+ avatar +'" class="thumb"/></li>';
+    html += '<li class="name">'+ name +'</li>';
+    html += '<li class="email">'+ email +'</li>';
+    html += '<li class="close"><a href="javascript:void(0)" onclick="DBWP5.logout()"><span>x<span></a></li>';
+    html += '</ul>';
+    html += "</div>";
     for (var i in res_data) {
         html += "<div class='item' data-id='"+res_data[i]._id+"' onclick='DBWP5.design_info(this)'>";
         html += "<div class='attachment-preview'>";
