@@ -871,6 +871,10 @@ body.dbwp5 .media-frame-toolbar{ display: none; }
     top: -6px;
     left: 3px;
 }
+.designbold-items.attachments-browser .toolbar .close>a:focus {
+    outline: 0;
+    box-shadow: none;
+}
 
 /*@media only screen and (min-width: 1800px){
     .designbold-items.attachments-browser .attachments .item {
